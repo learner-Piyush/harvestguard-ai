@@ -1,0 +1,20 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Scan {
+  id              String   @id @default(uuid())
+  userId          String
+  produceType     String
+  ripenessStage   String
+  freshnessScore  Int
+  shelfLifeDays   Int
+  recommendation  String
+  imageUrl        String
+  createdAt       DateTime @default(now())
+}
