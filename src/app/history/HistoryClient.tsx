@@ -38,6 +38,36 @@ export default function HistoryClient({
   const [filter, setFilter] = useState<"all" | "fruit" | "vegetable">(initialFilter);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const handleExportCSV = () => {
+    if (initialScans.length === 0) return;
+
+    const headers = ["ID", "Produce Type", "Ripeness Stage", "Freshness Score", "Shelf Life (Days)", "Recommendation", "Created At"];
+    const rows = initialScans.map(scan => [
+      scan.id,
+      scan.produceType,
+      scan.ripenessStage,
+      scan.freshnessScore,
+      scan.shelfLifeDays,
+      `"${scan.recommendation.replace(/"/g, '""')}"`,
+      new Date(scan.createdAt).toISOString()
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `harvestguard_scans_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const getScoreColorClass = (score: number) => {
     if (score >= 80) return "text-primary";
     if (score >= 50) return "text-secondary";
@@ -69,7 +99,7 @@ export default function HistoryClient({
       <main className="max-w-7xl mx-auto px-container-margin">
         {/* History Header & Filter */}
         <section className="py-stack-md flex flex-col gap-4">
-          <div className="flex items-end justify-between">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">History</h2>
               <p className="text-on-surface-variant text-label-sm">
@@ -77,19 +107,28 @@ export default function HistoryClient({
               </p>
             </div>
             
-            <div className="relative inline-block text-left">
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-xl border border-outline-variant hover:bg-surface-container transition-colors active:scale-95"
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-sm"
               >
-                <span className="text-label-sm font-semibold text-on-surface-variant">
-                  {filter === "all" ? "All Produce" : filter === "fruit" ? "Fruits" : "Vegetables"}
-                </span>
-                <span className="material-symbols-outlined text-on-surface-variant text-[18px]">
-                  expand_more
-                </span>
+                <span className="material-symbols-outlined text-[18px]">download</span>
+                <span className="text-label-sm font-semibold whitespace-nowrap">Export CSV</span>
               </button>
 
+              <div className="relative inline-block text-left">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-xl border border-outline-variant hover:bg-surface-container transition-colors active:scale-95"
+                >
+                  <span className="text-label-sm font-semibold text-on-surface-variant">
+                    {filter === "all" ? "All Produce" : filter === "fruit" ? "Fruits" : "Vegetables"}
+                  </span>
+                  <span className="material-symbols-outlined text-on-surface-variant text-[18px]">
+                    expand_more
+                  </span>
+                </button>
+                
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-xl bg-surface border border-outline-variant shadow-lg z-10 overflow-hidden">
                   <div className="py-1">
@@ -121,8 +160,9 @@ export default function HistoryClient({
                       Vegetables
                     </button>
                   </div>
-                </div>
-              )}
+                    </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
