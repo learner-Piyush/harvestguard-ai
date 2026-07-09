@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import BottomNavBar from "@/components/BottomNavBar";
+import ResultsSkeleton from "@/components/ResultsSkeleton";
 
 interface GeminiAnalysis {
   produce_type: string;
@@ -14,43 +15,84 @@ interface GeminiAnalysis {
   storage_recommendation: string;
 }
 
+const GAUGE_RADIUS = 110;
+const GAUGE_CIRCUMFERENCE = 2 * Math.PI * GAUGE_RADIUS;
+
 export default function ResultsPage() {
   const router = useRouter();
   
   const [image, setImage] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<GeminiAnalysis | null>(null);
-  const [dashOffset, setDashOffset] = useState(691); // Default full circle offset (circumference)
+  const [dashOffset, setDashOffset] = useState(GAUGE_CIRCUMFERENCE); // Default full circle offset
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const runAnalysis = useCallback(async (imageData: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: imageData }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to analyze produce.");
+      }
+
+      const result = await response.json() as GeminiAnalysis;
+      setAnalysis(result);
+      sessionStorage.setItem("harvestguard_pending_analysis", JSON.stringify(result));
+
+      // Animate progress circle with a slight delay
+      const score = result.freshness_score || 0;
+      const offset = GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
+      setTimeout(() => {
+        setDashOffset(offset);
+      }, 100);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "An error occurred during analysis. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     // Read from sessionStorage
     const storedImage = sessionStorage.getItem("harvestguard_pending_image");
     const storedAnalysis = sessionStorage.getItem("harvestguard_pending_analysis");
 
-    if (!storedImage || !storedAnalysis) {
-      // If no pending scan data, redirect to scan page
+    if (!storedImage) {
       router.replace("/scan");
       return;
     }
 
     setImage(storedImage);
-    try {
-      const parsed = JSON.parse(storedAnalysis) as GeminiAnalysis;
-      setAnalysis(parsed);
 
-      // Animate progress circle with a slight delay
-      const circumference = 2 * Math.PI * 110; // r=110
-      const score = parsed.freshness_score || 0;
-      const offset = circumference - (score / 100) * circumference;
-      setTimeout(() => {
-        setDashOffset(offset);
-      }, 100);
-    } catch (e) {
-      console.error(e);
-      setError("Failed to parse quality analysis results.");
+    if (storedAnalysis) {
+      try {
+        const parsed = JSON.parse(storedAnalysis) as GeminiAnalysis;
+        setAnalysis(parsed);
+        setLoading(false);
+
+        // Animate progress circle with a slight delay
+        const score = parsed.freshness_score || 0;
+        const offset = GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
+        setTimeout(() => {
+          setDashOffset(offset);
+        }, 100);
+      } catch (e) {
+        console.error(e);
+        runAnalysis(storedImage);
+      }
+    } else {
+      runAnalysis(storedImage);
     }
-  }, [router]);
+  }, [router, runAnalysis]);
 
   const handleSaveToInventory = async () => {
     if (!analysis || !image) return;
@@ -108,17 +150,9 @@ export default function ResultsPage() {
       </div>
     );
   }
-
-  if (!analysis) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-background p-container-margin text-center">
-        <span className="material-symbols-outlined text-primary text-5xl animate-spin">
-          progress_activity
-        </span>
-        <p className="mt-4 font-headline-md text-primary">Loading Analysis Results...</p>
-        <p className="mt-2 text-on-surface-variant text-label-sm">This usually takes a few seconds.</p>
-      </div>
-    );
+  
+  if (loading || (!analysis && !error)) {
+    return <ResultsSkeleton image={image} />;
   }
 
   // Set visual indicators
@@ -129,10 +163,10 @@ export default function ResultsPage() {
     spoiled: { bg: "bg-error/10 text-error", text: "Spoiled / Critical" },
   };
 
-  const ripenessConfig = ripenessTags[analysis.ripeness_stage] || {
+  const ripenessConfig = analysis ? (ripenessTags[analysis.ripeness_stage] || {
     bg: "bg-surface-container-high text-on-surface-variant",
     text: analysis.ripeness_stage,
-  };
+  }) : { bg: "", text: "" };
 
   return (
     <div className="bg-background text-on-background font-body-md min-h-screen pb-24">
@@ -145,7 +179,7 @@ export default function ResultsPage() {
             Analysis Result
           </p>
           <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">
-            {analysis.produce_type}
+            {analysis?.produce_type || "Analysis Failed"}
           </h2>
         </div>
 
@@ -168,9 +202,9 @@ export default function ResultsPage() {
                 cx="128"
                 cy="128"
                 fill="transparent"
-                r="110"
+                r={GAUGE_RADIUS}
                 stroke="currentColor"
-                strokeDasharray="691.15"
+                strokeDasharray={GAUGE_CIRCUMFERENCE}
                 strokeDashoffset={dashOffset}
                 strokeLinecap="round"
                 strokeWidth="16"
@@ -179,7 +213,7 @@ export default function ResultsPage() {
             {/* Score Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <span className="font-headline-lg text-headline-lg text-primary">
-                {analysis.freshness_score}%
+                {analysis?.freshness_score || 0}%
               </span>
               <span className="font-label-sm text-label-sm text-on-surface-variant">
                 FRESHNESS
@@ -211,14 +245,14 @@ export default function ResultsPage() {
               <div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant">Est. Shelf-life</p>
                 <p className="font-body-lg text-body-lg font-bold text-on-surface">
-                  {analysis.estimated_shelf_life_days} Days Remaining
+                  {analysis?.estimated_shelf_life_days || 0} Days Remaining
                 </p>
               </div>
             </div>
           </div>
 
           {/* Defect Chips */}
-          {analysis.visible_defects && analysis.visible_defects.length > 0 && (
+          {analysis?.visible_defects && analysis.visible_defects.length > 0 && (
             <div className="space-y-stack-sm">
               <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase">
                 Visual Indicators
@@ -264,7 +298,7 @@ export default function ResultsPage() {
                 Storage Recommendation
               </h3>
               <p className="font-body-md text-on-secondary-fixed-variant leading-relaxed">
-                {analysis.storage_recommendation}
+                {analysis?.storage_recommendation || "No recommendation available."}
               </p>
             </div>
           </div>
@@ -273,7 +307,7 @@ export default function ResultsPage() {
         {/* Action Button */}
         <button
           onClick={handleSaveToInventory}
-          disabled={saving}
+          disabled={saving || !analysis}
           className="w-full py-4 bg-primary text-on-primary rounded-full font-headline-md text-headline-md shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
         >
           {saving ? (
