@@ -31,41 +31,17 @@ export default function ScanPage() {
     fileInputRef.current?.click();
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     if (!imagePreview) {
       setError("Please capture or upload an image first.");
       return;
     }
 
-    setAnalyzing(true);
-    setError(null);
+    // Store in sessionStorage and move to results page immediately to show loading skeleton
+    sessionStorage.setItem("harvestguard_pending_image", imagePreview);
+    sessionStorage.removeItem("harvestguard_pending_analysis");
 
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ image: imagePreview }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to analyze produce.");
-      }
-
-      const result = await response.json();
-
-      // Store in sessionStorage to share with /results page
-      sessionStorage.setItem("harvestguard_pending_image", imagePreview);
-      sessionStorage.setItem("harvestguard_pending_analysis", JSON.stringify(result));
-
-      router.push("/results");
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message || "An error occurred during analysis. Please try again.");
-      setAnalyzing(false);
-    }
+    router.push("/results");
   };
 
   return (
@@ -153,20 +129,11 @@ export default function ScanPage() {
         <div className="w-full mt-stack-md">
           <button
             onClick={handleAnalyze}
-            disabled={analyzing || !imagePreview}
+            disabled={!imagePreview}
             className="w-full h-14 bg-primary text-on-primary rounded-xl font-headline-md text-headline-md flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {analyzing ? (
-              <>
-                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                Analyzing Produce...
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined">analytics</span>
-                Analyze Produce
-              </>
-            )}
+            <span className="material-symbols-outlined">analytics</span>
+            Analyze Produce
           </button>
           <p className="text-center text-label-sm font-label-sm text-on-surface-variant mt-4 opacity-60">
             Powered by HarvestGuard AI Engine v2.4
