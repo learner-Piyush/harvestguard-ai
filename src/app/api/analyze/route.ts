@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GeminiAnalysis, parseGeminiResponse } from "@/lib/gemini-parser";
 
 const FASTAPI_URL = process.env.FASTAPI_URL ?? "http://localhost:8000";
-
-interface GeminiAnalysis {
-  produce_type: string;
-  ripeness_stage: "unripe" | "ripe" | "overripe" | "spoiled";
-  visible_defects: string[];
-  freshness_score: number;
-  estimated_shelf_life_days: number;
-  storage_recommendation: string;
-}
 
 interface FastAPIResponse {
   predicted_shelf_life_days: number;
@@ -132,17 +124,7 @@ Base your assessment on color, texture, blemishes, and visible decay signs.`;
     ]);
 
     const responseText = result.response.text();
-    if (!responseText) {
-      throw new Error("No response received from Gemini API");
-    }
-
-    // Clean up potential markdown code block formatting (defense-in-depth)
-    let cleanText = responseText.trim();
-    if (cleanText.startsWith("```")) {
-      cleanText = cleanText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
-    }
-
-    const gemini = JSON.parse(cleanText) as GeminiAnalysis;
+    const gemini = parseGeminiResponse(responseText);
 
     const defect_count = Array.isArray(gemini.visible_defects)
       ? gemini.visible_defects.length
