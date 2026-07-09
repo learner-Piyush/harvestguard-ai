@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import HistoryClient from "./HistoryClient";
 import { fruitsList } from "@/lib/produce";
 
-export const revalidate = 0; // Disable page caching so updates show immediately
+export const revalidate = 0;
 
 export default async function HistoryPage({
   searchParams,
@@ -29,8 +29,8 @@ export default async function HistoryPage({
       produceType: { contains: fruit, mode: "insensitive" },
     }));
   } else if (filter === "vegetable") {
-    where.AND = fruitsList.map((fruit) => ({
-      produceType: { not: { contains: fruit, mode: "insensitive" } },
+    where.NOT = fruitsList.map((fruit) => ({
+      produceType: { contains: fruit, mode: "insensitive" },
     }));
   }
 

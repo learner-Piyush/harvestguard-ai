@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
@@ -37,6 +37,10 @@ export default function HistoryClient({
   const searchParams = useSearchParams();
   const [filter, setFilter] = useState<"all" | "fruit" | "vegetable">(initialFilter);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    setFilter(initialFilter);
+  }, [initialFilter]);
 
   const handleExportCSV = () => {
     if (initialScans.length === 0) return;
@@ -103,10 +107,10 @@ export default function HistoryClient({
             <div>
               <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">History</h2>
               <p className="text-on-surface-variant text-label-sm">
-                {initialScans.length} total scans logged
+                {totalCount} total scans logged
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={handleExportCSV}
@@ -128,39 +132,39 @@ export default function HistoryClient({
                     expand_more
                   </span>
                 </button>
-                
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-surface border border-outline-variant shadow-lg z-10 overflow-hidden">
-                  <div className="py-1">
-                    <button
-                      onClick={() => {
-                        handleFilterChange("all");
-                        setDropdownOpen(false);
-                      }}
-                      className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                    >
-                      All Produce
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleFilterChange("fruit");
-                        setDropdownOpen(false);
-                      }}
-                      className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                    >
-                      Fruits
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleFilterChange("vegetable");
-                        setDropdownOpen(false);
-                      }}
-                      className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                    >
-                      Vegetables
-                    </button>
-                  </div>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-xl bg-surface border border-outline-variant shadow-lg z-10 overflow-hidden">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          handleFilterChange("all");
+                          setDropdownOpen(false);
+                        }}
+                        className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                      >
+                        All Produce
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleFilterChange("fruit");
+                          setDropdownOpen(false);
+                        }}
+                        className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                      >
+                        Fruits
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleFilterChange("vegetable");
+                          setDropdownOpen(false);
+                        }}
+                        className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                      >
+                        Vegetables
+                      </button>
                     </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -181,6 +185,7 @@ export default function HistoryClient({
                   className="group flex items-center gap-4 p-3 bg-surface-container-lowest rounded-[1.5rem] border border-[#E6EBE6] shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.01]"
                 >
                   <div className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-surface-container">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       className="w-full h-full object-cover"
                       alt={scan.produceType}
@@ -190,11 +195,10 @@ export default function HistoryClient({
                   <div className="flex-grow min-w-0">
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-label-sm px-2 py-0.5 rounded-full ${
-                          category === "fruit"
+                        className={`text-label-sm px-2 py-0.5 rounded-full ${category === "fruit"
                             ? "text-on-tertiary-container bg-tertiary-fixed"
                             : "text-on-secondary-container bg-secondary-fixed"
-                        }`}
+                          }`}
                       >
                         {category === "fruit" ? "Fruit" : "Vegetable"}
                       </span>
@@ -283,11 +287,10 @@ export default function HistoryClient({
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`w-10 h-10 rounded-full text-label-md font-medium transition-all ${
-                          currentPage === pageNum
+                        className={`w-10 h-10 rounded-full text-label-md font-medium transition-all ${currentPage === pageNum
                             ? "bg-primary text-on-primary shadow-md"
                             : "text-on-surface-variant hover:bg-surface-container-high"
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>

@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
         produceType: { contains: fruit, mode: "insensitive" },
       }));
     } else if (filter === "vegetable") {
-      where.AND = fruitsList.map((fruit) => ({
-        produceType: { not: { contains: fruit, mode: "insensitive" } },
+      where.NOT = fruitsList.map((fruit) => ({
+        produceType: { contains: fruit, mode: "insensitive" },
       }));
     }
 
