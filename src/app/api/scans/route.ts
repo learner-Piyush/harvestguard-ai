@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { fruitsList } from "@/lib/produce";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,16 +11,44 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const scans = await prisma.scan.findMany({
-      where: {
-        userId: userId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+    const filter = searchParams.get("filter") || "all";
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
 
-    return NextResponse.json(scans);
+    let where: any = { userId };
+
+    if (filter === "fruit") {
+      where.OR = fruitsList.map((fruit) => ({
+        produceType: { contains: fruit, mode: "insensitive" },
+      }));
+    } else if (filter === "vegetable") {
+      where.AND = fruitsList.map((fruit) => ({
+        produceType: { not: { contains: fruit, mode: "insensitive" } },
+      }));
+    }
+
+    const [scans, totalCount] = await Promise.all([
+      prisma.scan.findMany({
+        where,
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: skip,
+        take: pageSize,
+      }),
+      prisma.scan.count({
+        where,
+      }),
+    ]);
+
+    return NextResponse.json({
+      scans,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      currentPage: page,
+    });
   } catch (error: any) {
     console.error("GET Scans Error:", error);
     return NextResponse.json(
