@@ -143,9 +143,17 @@ export default function ScanPage() {
         </div>
 
         {error && (
-          <div className="w-full mt-4 p-3 bg-error-container text-on-error-container rounded-xl text-label-sm font-semibold flex items-center gap-2 border border-error/20">
-            <span className="material-symbols-outlined text-error">error</span>
-            {error}
+          <div className="w-full mt-4 p-4 bg-error-container text-on-error-container rounded-xl flex flex-col gap-3 border border-error/20 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 font-semibold text-label-sm">
+              <span className="material-symbols-outlined text-error">error</span>
+              {error}
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-label-sm font-bold text-error self-end hover:underline"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -158,13 +166,13 @@ export default function ScanPage() {
           >
             {analyzing ? (
               <>
-                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
                 Analyzing Produce...
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined">analytics</span>
-                Analyze Produce
+                <span className="material-symbols-outlined text-2xl">analytics</span>
+                {error ? "Try Analysis Again" : "Analyze Produce"}
               </>
             )}
           </button>
