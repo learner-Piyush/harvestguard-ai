@@ -119,9 +119,17 @@ export default function ScanPage() {
         </div>
 
         {error && (
-          <div className="w-full mt-4 p-3 bg-error-container text-on-error-container rounded-xl text-label-sm font-semibold flex items-center gap-2 border border-error/20">
-            <span className="material-symbols-outlined text-error">error</span>
-            {error}
+          <div className="w-full mt-4 p-4 bg-error-container text-on-error-container rounded-xl flex flex-col gap-3 border border-error/20 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 font-semibold text-label-sm">
+              <span className="material-symbols-outlined text-error">error</span>
+              {error}
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-label-sm font-bold text-error self-end hover:underline"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -132,8 +140,17 @@ export default function ScanPage() {
             disabled={!imagePreview}
             className="w-full h-14 bg-primary text-on-primary rounded-xl font-headline-md text-headline-md flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined">analytics</span>
-            Analyze Produce
+            {analyzing ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
+                Analyzing Produce...
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-2xl">analytics</span>
+                {error ? "Try Analysis Again" : "Analyze Produce"}
+              </>
+            )}
           </button>
           <p className="text-center text-label-sm font-label-sm text-on-surface-variant mt-4 opacity-60">
             Powered by HarvestGuard AI Engine v2.4

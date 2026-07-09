@@ -133,6 +133,24 @@ export default function ResultsPage() {
     }
   };
 
+  if (error && !analysis) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-background p-container-margin text-center">
+        <div className="w-20 h-20 bg-error-container/20 rounded-full flex items-center justify-center mb-6">
+          <span className="material-symbols-outlined text-error text-5xl">error_outline</span>
+        </div>
+        <h2 className="font-headline-lg-mobile text-on-surface mb-2">Analysis Failed</h2>
+        <p className="text-on-surface-variant mb-8 max-w-xs">{error}</p>
+        <button
+          onClick={() => router.push("/scan")}
+          className="bg-primary text-on-primary px-8 py-3 rounded-full font-headline-md shadow-lg active:scale-95 transition-transform"
+        >
+          Return to Scanner
+        </button>
+      </div>
+    );
+  }
+  
   if (loading || (!analysis && !error)) {
     return <ResultsSkeleton image={image} />;
   }
