@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GeminiAnalysis, parseGeminiResponse } from "@/lib/gemini-parser";
 
 const FASTAPI_URL = process.env.FASTAPI_URL ?? "http://localhost:8000";
-
-interface GeminiAnalysis {
-  produce_type: string;
-  ripeness_stage: "unripe" | "ripe" | "overripe" | "spoiled";
-  visible_defects: string[];
-  freshness_score: number;
-  estimated_shelf_life_days: number;
-  storage_recommendation: string;
-}
 
 interface FastAPIResponse {
   predicted_shelf_life_days: number;
@@ -132,17 +124,7 @@ Base your assessment on color, texture, blemishes, and visible decay signs.`;
     ]);
 
     const responseText = result.response.text();
-    if (!responseText) {
-      throw new Error("No response received from Gemini API");
-    }
-
-    // Clean up potential markdown code block formatting (defense-in-depth)
-    let cleanText = responseText.trim();
-    if (cleanText.startsWith("```")) {
-      cleanText = cleanText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
-    }
-
-    const gemini = JSON.parse(cleanText) as GeminiAnalysis;
+    const gemini = parseGeminiResponse(responseText);
 
     const defect_count = Array.isArray(gemini.visible_defects)
       ? gemini.visible_defects.length
@@ -171,14 +153,29 @@ Base your assessment on color, texture, blemishes, and visible decay signs.`;
       gemini_estimated_shelf_life_days: gemini.estimated_shelf_life_days,
       ml_predicted_shelf_life_days: mlResult?.predicted_shelf_life_days ?? null,
       ml_confidence_note: mlResult?.confidence_note ?? null,
+      ml_service_status: mlResult ? "online" : "offline",
     };
 
     return NextResponse.json(mergedResponse);
   } catch (error: any) {
-    console.error("Gemini Analysis Error:", error);
+    console.error("Analysis Error:", error);
+
+    let errorMessage = "An unexpected error occurred while analyzing the produce.";
+    let statusCode = 500;
+
+    if (error.message?.includes("GEMINI_API_KEY")) {
+      errorMessage = "AI Service is not configured. Please check your API keys.";
+    } else if (error.message?.includes("No response received from Gemini")) {
+      errorMessage = "The AI service failed to respond. Please try again.";
+    } else if (error instanceof SyntaxError) {
+      errorMessage = "Failed to parse the AI analysis results. Please try again.";
+    } else if (error.message?.includes("fetch")) {
+      errorMessage = "Network error. Please check your connection to the AI services.";
+    }
+
     return NextResponse.json(
-      { error: error?.message || "Failed to analyze image" },
-      { status: 500 }
+      { error: errorMessage, details: error?.message },
+      { status: statusCode }
     );
   }
 }

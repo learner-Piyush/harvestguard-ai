@@ -31,41 +31,17 @@ export default function ScanPage() {
     fileInputRef.current?.click();
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     if (!imagePreview) {
       setError("Please capture or upload an image first.");
       return;
     }
 
-    setAnalyzing(true);
-    setError(null);
+    // Store in sessionStorage and move to results page immediately to show loading skeleton
+    sessionStorage.setItem("harvestguard_pending_image", imagePreview);
+    sessionStorage.removeItem("harvestguard_pending_analysis");
 
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ image: imagePreview }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to analyze produce.");
-      }
-
-      const result = await response.json();
-
-      // Store in sessionStorage to share with /results page
-      sessionStorage.setItem("harvestguard_pending_image", imagePreview);
-      sessionStorage.setItem("harvestguard_pending_analysis", JSON.stringify(result));
-
-      router.push("/results");
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message || "An error occurred during analysis. Please try again.");
-      setAnalyzing(false);
-    }
+    router.push("/results");
   };
 
   return (
@@ -143,9 +119,17 @@ export default function ScanPage() {
         </div>
 
         {error && (
-          <div className="w-full mt-4 p-3 bg-error-container text-on-error-container rounded-xl text-label-sm font-semibold flex items-center gap-2 border border-error/20">
-            <span className="material-symbols-outlined text-error">error</span>
-            {error}
+          <div className="w-full mt-4 p-4 bg-error-container text-on-error-container rounded-xl flex flex-col gap-3 border border-error/20 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 font-semibold text-label-sm">
+              <span className="material-symbols-outlined text-error">error</span>
+              {error}
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-label-sm font-bold text-error self-end hover:underline"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -153,18 +137,18 @@ export default function ScanPage() {
         <div className="w-full mt-stack-md">
           <button
             onClick={handleAnalyze}
-            disabled={analyzing || !imagePreview}
+            disabled={!imagePreview}
             className="w-full h-14 bg-primary text-on-primary rounded-xl font-headline-md text-headline-md flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {analyzing ? (
               <>
-                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
                 Analyzing Produce...
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined">analytics</span>
-                Analyze Produce
+                <span className="material-symbols-outlined text-2xl">analytics</span>
+                {error ? "Try Analysis Again" : "Analyze Produce"}
               </>
             )}
           </button>

@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import BottomNavBar from "@/components/BottomNavBar";
+import { getCategory } from "@/lib/produce";
 
 interface ScanItem {
   id: string;
@@ -18,10 +20,22 @@ interface ScanItem {
 
 interface HistoryClientProps {
   initialScans: ScanItem[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  initialFilter: "all" | "fruit" | "vegetable";
 }
 
-export default function HistoryClient({ initialScans }: HistoryClientProps) {
-  const [filter, setFilter] = useState<"all" | "fruit" | "vegetable">("all");
+export default function HistoryClient({
+  initialScans,
+  totalCount,
+  totalPages,
+  currentPage,
+  initialFilter,
+}: HistoryClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [filter, setFilter] = useState<"all" | "fruit" | "vegetable">(initialFilter);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleExportCSV = () => {
@@ -54,22 +68,6 @@ export default function HistoryClient({ initialScans }: HistoryClientProps) {
     document.body.removeChild(link);
   };
 
-  // Group list categories
-  const fruitsList = ["apple", "banana", "orange", "strawberry", "grape", "peach", "pear", "mango", "berry", "cherry", "melon"];
-  
-  const getCategory = (produceType: string) => {
-    const name = produceType.toLowerCase();
-    if (fruitsList.some(fruit => name.includes(fruit))) {
-      return "fruit";
-    }
-    return "vegetable"; // Default fallback
-  };
-
-  const filteredScans = initialScans.filter((scan) => {
-    if (filter === "all") return true;
-    return getCategory(scan.produceType) === filter;
-  });
-
   const getScoreColorClass = (score: number) => {
     if (score >= 80) return "text-primary";
     if (score >= 50) return "text-secondary";
@@ -78,6 +76,20 @@ export default function HistoryClient({ initialScans }: HistoryClientProps) {
 
   const getRipenessText = (stage: string) => {
     return stage.charAt(0).toUpperCase() + stage.slice(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", newPage.toString());
+    router.push(`/history?${params.toString()}`);
+  };
+
+  const handleFilterChange = (newFilter: "all" | "fruit" | "vegetable") => {
+    setFilter(newFilter);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("filter", newFilter);
+    params.set("page", "1"); // Reset to page 1 on filter change
+    router.push(`/history?${params.toString()}`);
   };
 
   return (
@@ -116,39 +128,39 @@ export default function HistoryClient({ initialScans }: HistoryClientProps) {
                     expand_more
                   </span>
                 </button>
-
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl bg-surface border border-outline-variant shadow-lg z-10 overflow-hidden">
-                    <div className="py-1">
-                      <button
-                        onClick={() => {
-                          setFilter("all");
-                          setDropdownOpen(false);
-                        }}
-                        className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                      >
-                        All Produce
-                      </button>
-                      <button
-                        onClick={() => {
-                          setFilter("fruit");
-                          setDropdownOpen(false);
-                        }}
-                        className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                      >
-                        Fruits
-                      </button>
-                      <button
-                        onClick={() => {
-                          setFilter("vegetable");
-                          setDropdownOpen(false);
-                        }}
-                        className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                      >
-                        Vegetables
-                      </button>
-                    </div>
+                
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-surface border border-outline-variant shadow-lg z-10 overflow-hidden">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        handleFilterChange("all");
+                        setDropdownOpen(false);
+                      }}
+                      className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                    >
+                      All Produce
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleFilterChange("fruit");
+                        setDropdownOpen(false);
+                      }}
+                      className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                    >
+                      Fruits
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleFilterChange("vegetable");
+                        setDropdownOpen(false);
+                      }}
+                      className="w-full text-left block px-4 py-2 text-label-sm text-on-surface hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                    >
+                      Vegetables
+                    </button>
                   </div>
+                    </div>
                 )}
               </div>
             </div>
@@ -157,8 +169,8 @@ export default function HistoryClient({ initialScans }: HistoryClientProps) {
 
         {/* Scan History List */}
         <section className="flex flex-col gap-4 max-w-2xl mx-auto">
-          {filteredScans.length > 0 ? (
-            filteredScans.map((scan) => {
+          {initialScans.length > 0 ? (
+            initialScans.map((scan) => {
               const category = getCategory(scan.produceType);
               const scoreColor = getScoreColorClass(scan.freshnessScore);
               const strokeDashoffset = 125.6 - (scan.freshnessScore / 100) * 125.6; // 2 * PI * r (r=20) => ~125.6
@@ -243,6 +255,67 @@ export default function HistoryClient({ initialScans }: HistoryClientProps) {
             </div>
           )}
         </section>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <section className="mt-8 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-container transition-colors"
+                aria-label="Previous page"
+              >
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  // Simple logic to show current page and a few around it if there are many pages
+                  if (
+                    totalPages <= 5 ||
+                    pageNum === 1 ||
+                    pageNum === totalPages ||
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-10 h-10 rounded-full text-label-md font-medium transition-all ${
+                          currentPage === pageNum
+                            ? "bg-primary text-on-primary shadow-md"
+                            : "text-on-surface-variant hover:bg-surface-container-high"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (
+                    (pageNum === 2 && currentPage > 3) ||
+                    (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                  ) {
+                    return <span key={pageNum} className="px-1 text-on-surface-variant">...</span>;
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed hover:bg-surface-container transition-colors"
+                aria-label="Next page"
+              >
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            </div>
+            <p className="text-label-sm text-on-surface-variant">
+              Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalCount)} of {totalCount} results
+            </p>
+          </section>
+        )}
       </main>
 
       <BottomNavBar active="history" />
