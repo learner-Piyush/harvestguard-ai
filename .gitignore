@@ -36,3 +36,12 @@ yarn-error.log*
 next-env.d.ts
 
 /.vscode
+
+# FastAPI / Python
+fastapi_service/model/*.pkl
+fastapi_service/__pycache__/
+fastapi_service/**/__pycache__/
+*.pyc
+*.pyo
+.venv/
+__pycache__/
