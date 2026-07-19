@@ -3,6 +3,7 @@ name: Monitor HarvestGuard
 on:
   schedule:
     - cron: '*/10 * * * *'  # every 10 min
+  workflow_dispatch:
 jobs:
   check:
     runs-on: ubuntu-latest
