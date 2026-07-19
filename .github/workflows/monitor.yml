@@ -1,0 +1,25 @@
+# .github/workflows/monitor.yml
+name: Monitor HarvestGuard
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # every 10 min
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check frontend
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://harvestguard-ai.vercel.app)
+          if [ "$STATUS" -ne 200 ]; then
+            curl -H "Content-Type: application/json" -X POST \
+            -d "{\"content\": \"🚨 Frontend down! Status: $STATUS\"}" \
+            ${{ secrets.DISCORD_WEBHOOK }}
+          fi
+      - name: Check backend health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://harvestguard-ai.onrender.com/health)
+          if [ "$STATUS" -ne 200 ]; then
+            curl -H "Content-Type: application/json" -X POST \
+            -d "{\"content\": \"🚨 Backend down! Status: $STATUS\"}" \
+            ${{ secrets.DISCORD_WEBHOOK }}
+          fi
