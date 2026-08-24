@@ -1,4 +1,4 @@
-# HarvestGuard AI
+# HarvestGuard AI ![CI](https://github.com/learner-Piyush/harvestguard-ai/actions/workflows/ci.yml/badge.svg)
 
 **AI-powered post-harvest produce quality & shelf-life estimator**, built for CII Post-Harvest Hackathon (organised by CII-FACE in collaboration with IIT Guwahati Technology Incubation Centre).
 
