@@ -1,0 +1,12 @@
+# .github/workflows/keep-alive.yml
+name: Keep Render Awake
+on:
+  schedule:
+    - cron: '*/14 * * * *'  # every 14 min, under Render's 15-min spin-down
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend
+        run: curl -s -o /dev/null https://harvestguard-ai.onrender.com/health
