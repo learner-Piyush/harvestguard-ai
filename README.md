@@ -30,14 +30,14 @@ This two-layer design means the app isn't just describing what it sees with an L
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS |
-| Auth | Clerk |
-| Database | NeonDB (PostgreSQL) via Prisma ORM |
-| Vision AI | Google Gemini API |
-| ML Prediction | Python, FastAPI, scikit-learn (RandomForestRegressor) |
-| Hosting | Vercel (frontend) + Render (FastAPI microservice) |
-| Design | Google Stitch |
-| Build tooling | Google Antigravity, Jules (async task automation) |
+| Frontend | [![Next.js 14](https://img.shields.io/badge/Next.js_14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/) (App Router), [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/), [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/) |
+| Auth | [![Clerk](https://img.shields.io/badge/Clerk-6C47FF?style=for-the-badge&logo=clerk&logoColor=white)](https://clerk.com/) |
+| Database | [![NeonDB](https://img.shields.io/badge/NeonDB-34D59A?style=for-the-badge&logo=neon&logoColor=white)](https://neon.com/) ([![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)) via [![Prisma ORM](https://img.shields.io/badge/Prisma_ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/orm) |
+| Vision AI | [![Google Gemini API](https://img.shields.io/badge/Google_Gemini_API-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://aistudio.google.com/api-keys) |
+| ML Prediction | [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/), [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/), [![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/) (RandomForestRegressor) |
+| Hosting | [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/) (frontend) + [![Render](https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=white)](https://render.com/) (FastAPI microservice) |
+| Design | [![Google Stitch](https://img.shields.io/badge/Google_Stitch-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://stitch.withgoogle.com/) |
+| Build tooling | [![Google Antigravity](https://img.shields.io/badge/Google_Antigravity-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://antigravity.google/), [![Google Jules](https://img.shields.io/badge/Google_Jules-715CD7?style=for-the-badge&logo=googlejules&logoColor=white)](https://jules.google/) (async task automation) |
 
 ## Currently supports
 
